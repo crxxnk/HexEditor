@@ -21,18 +21,23 @@ bool HxE::read(const char* input) {
 }
 
 bool HxE::read(const char* input, unsigned int offset) {
+  this->file = input;
   std::ifstream file(input, std::ios::binary);
   if(!file.is_open()) {
     std::cerr << "Couldn't open file!" << std::endl;
     return false;
   }
   file.seekg(offset, std::ios::beg);
+  std::vector<uint8_t> char_list;
   while(file.read(&this->buf, 1)) {
     char r = buf;
-    std::cout << std::left << std::setw(3) << std::hex << static_cast<int>(r) << " ";
+    static_cast<uint8_t>(r);
+    // std::cout << std::left << std::setw(3) << std::hex << static_cast<uint8_t>(r) << " ";
+    char_list.push_back(r);
   }
+  this->v = char_list;
   file.close();
-  // std::cout << "File was read successfully" << std::endl;
+  std::cout << "File was read successfully" << std::endl;
   return true;
 }
 
