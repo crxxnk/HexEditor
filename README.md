@@ -29,7 +29,6 @@ g++ -o hexeditor src/*.cpp
 
 ## Planned Features
 - Add undo/redo functionality (I already made a simple undo)
-- Implement file difference comparison
 - GUI support
 
 ## Contributing
