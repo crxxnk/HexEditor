@@ -12,9 +12,9 @@ bool utils::isFileEmpty(const char *input) {
   return file.tellg() == 0;
 }
 
-bool utils::b_compare(const char *input, const char* _input) {
-  std::ifstream file(input, std::ios::binary);
-  std::ifstream _file(_input, std::ios::binary);
+bool utils::b_compare(const HxE &input, const HxE &_input) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
 
   if(!file.is_open() || !_file.is_open()) {
     std::cerr << "Couldn't open file" << std::endl;
@@ -24,29 +24,21 @@ bool utils::b_compare(const char *input, const char* _input) {
   char f;
   char s;
 
-  std::vector<uint8_t> char_list {};
-  std::vector<uint8_t> _char_list {};
-
-  while(file.read(&f, 1)) {
-    char r = f;
-    static_cast<uint8_t>(r);
-    char_list.push_back(r);
-  }
-
-  while(_file.read(&s, 1)) {
-    char r = s;
-    static_cast<uint8_t>(r);
-    _char_list.push_back(r);
+  while(file.read(&f, 1) && _file.read(&s, 1)) {
+    if(f != s)
+      return false;
   }
 
   file.close();
   _file.close();
-  return char_list == _char_list;
+  return true;
 }
 
-std::pair<int, int> utils::p_compare(const char *input, const char *_input) {
-  std::ifstream file(input, std::ios::binary);
-  std::ifstream _file(_input, std::ios::binary);
+//! First occurence
+//* Hex
+std::pair<int, int> utils::p_compare(const HxE &input, const HxE &_input) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
 
   if(!file.is_open() || !_file.is_open()) {
     std::cerr << "Couldn't open file" << std::endl;
@@ -55,9 +47,6 @@ std::pair<int, int> utils::p_compare(const char *input, const char *_input) {
 
   char f;
   char s;
-
-  std::vector<uint8_t> char_list {};
-  std::vector<uint8_t> _char_list {};
 
   while(file.read(&f, 1) && _file.read(&s, 1)) {
     if(f != s)
@@ -70,36 +59,9 @@ std::pair<int, int> utils::p_compare(const char *input, const char *_input) {
   return {-1,-1};
 }
 
-std::pair<std::pair<char, char>, unsigned int> utils::po_compare(const char *input, const char *_input) {
-  std::ifstream file(input, std::ios::binary);
-  std::ifstream _file(_input, std::ios::binary);
-
-  if(!file.is_open() || !_file.is_open()) {
-    std::cerr << "Couldn't open file" << std::endl;
-    return {{' ', ' '}, 0};
-  }
-
-  char f;
-  char s;
-  unsigned int offset; //TODO MAKE OFFSET COMPARISON, CHANGE THE FUNCTION TO RETURN 2 CHARS AND 2 OFFSETS FOR EACH FILE
-
-  std::vector<uint8_t> char_list {};
-  std::vector<uint8_t> _char_list {};
-
-  while(file.read(&f, 1) && _file.read(&s, 1)) {
-    if(f != s)
-      return {{f, s}, offset};
-  }
-
-  file.close();
-  _file.close();
-
-  return {{'-','-'}, 0};
-}
-
-std::pair<int, int> utils::o_compare(const char *input, const char *_input) {
-  std::ifstream file(input, std::ios::binary);
-  std::ifstream _file(_input, std::ios::binary);
+std::pair<int, int> utils::p_compare(const HxE &input, const HxE &_input, unsigned int &offset) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
 
   if(!file.is_open() || !_file.is_open()) {
     std::cerr << "Couldn't open file" << std::endl;
@@ -108,21 +70,153 @@ std::pair<int, int> utils::o_compare(const char *input, const char *_input) {
 
   char f;
   char s;
-  unsigned int offset;
-  unsigned int _offset;
+  std::streampos cur_offset = 0;
 
-  std::vector<uint8_t> char_list {};
-  std::vector<uint8_t> _char_list {};
+  while (file.read(&f, 1) && _file.read(&s, 1)) {
+    cur_offset = file.tellg();
+
+    if (f != s) {
+      offset = static_cast<unsigned int>(cur_offset) - 1;
+      return {static_cast<int>(f), static_cast<int>(s)}; 
+    }
+  }
+  return {-1, -1};
+}
+
+//* Char
+std::pair<char, char> utils::c_p_compare(const HxE &input, const HxE &_input) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {'-', '-'};
+  }
+
+  char f;
+  char s;
 
   while(file.read(&f, 1) && _file.read(&s, 1)) {
-    offset = static_cast<int>(file.tellg()) - 1;
-    _offset = static_cast<int>(_file.tellg()) - 1;
     if(f != s)
-      return {offset, _offset};
+      return {f, s};
   }
 
   file.close();
   _file.close();
 
-  return {-1, -1};
+  return {'-', '-'};
+}
+
+std::pair<char, char> utils::c_p_compare(const HxE &input, const HxE &_input, unsigned int &offset) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {'-', '-'};
+  }
+
+  char f;
+  char s;
+  std::streampos cur_offset = 0;
+
+  while (file.read(&f, 1) && _file.read(&s, 1)) {
+    cur_offset = file.tellg();
+
+    if (f != s) {
+      offset = static_cast<unsigned int>(cur_offset) - 1;
+      return {f, s}; 
+    }
+  }
+  offset = 0;
+  return {'-', '-'};
+}
+
+//! All
+//* Hex
+std::vector<std::pair<int, int>> utils::a_compare(const HxE &input, const HxE &_input) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {{-1, -1}};
+  }
+
+  char f;
+  char s;
+  std::vector<std::pair<int, int>> diff;
+
+  while(file.read(&f, 1) && _file.read(&s, 1)) {
+    if(f != s)
+      diff.push_back({static_cast<int>(f), static_cast<int>(s)});
+  }
+
+  file.close();
+  _file.close();
+
+  if(diff.empty())
+    return {{-1, -1}};
+  return diff;
+}
+
+std::vector<std::pair<int, int>> utils::a_compare(const HxE &input, const HxE &_input, std::vector<unsigned int> &offset) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {{-1, -1}};
+  }
+
+  char f;
+  char s;
+  std::streampos cur_offset = 0;
+  std::vector<std::pair<int, int>> diff;
+
+  while(file.read(&f, 1) && _file.read(&s, 1)) {
+    cur_offset = file.tellg();
+    if(f != s) {
+      offset.push_back(static_cast<unsigned int>(cur_offset) - 1);
+      diff.push_back({static_cast<int>(f), static_cast<int>(s)});
+    }
+  }
+
+  file.close();
+  _file.close();
+
+  if(diff.empty())
+    return {{-1, -1}};
+  return diff;
+}
+
+//* Char
+std::vector<std::pair<char, char>> utils::ca_compare(const HxE &input, const HxE &_input) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {{-1, -1}};
+  }
+
+  char f;
+  char s;
+  std::vector<std::pair<char, char>> diff;
+
+  while(file.read(&f, 1) && _file.read(&s, 1)) {
+    if(f != s)
+      diff.push_back({f, s});
+  }
+
+  file.close();
+  _file.close();
+
+  if(diff.empty())
+    return {{-1, -1}};
+  return diff;
+}
+
+std::vector<std::pair<char, char>> utils::ca_compare(const HxE &input, const HxE &_input, unsigned int &offset) {
+  
 }

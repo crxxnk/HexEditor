@@ -51,23 +51,17 @@ void HxE::edit(unsigned int offset, char byte) {
   file.seekp(temp_offset);
   char old;
   file.read(&old, 1);
-  std::ofstream old_char("old_char.txt");
-  if(!old_char.is_open()) {
-    std::cerr << "Couldn't open file!" << std::endl;
-    return;
-  }
-  old_char << old;
-
-  std::ofstream last_offset_file("last_offset.txt");
-  if(!last_offset_file.is_open()) {
-    std::cerr << "Couldn't open file!" << std::endl;
-    return;
-  }
-  last_offset_file << temp_offset;
   
   file.seekp(offset); // go to the specific byte offset
 
   file.write(&byte, sizeof(byte));
+
+  undoStack.push({offset, old});
+
+  while (!redoStack.empty()) {
+    redoStack.pop();
+  }
+
   file.close();
 }
 
@@ -88,16 +82,44 @@ void HxE::bDisplay(bool show_base){
   std::cout << std::endl;
 }
 
-void HxE::undoEdit() {
-  if(utils::isFileEmpty("old_char.txt") || utils::isFileEmpty("last_offset.txt")) {
-    std::cout << "Nothing to undo" << std::endl;
+void HxE::undo() {
+  if(undoStack.size() == 0) {
+    std::cerr << "Nothing to undo" << std::endl;
     return;
   }
-  std::ifstream old_char("old_char.txt");
-  std::ifstream last_offset("last_offset.txt");
-  char old;
-  unsigned int offset;
-  old_char >> old;
-  last_offset >> offset;
-  edit(offset, old);
+  auto [offset, oldByte] = undoStack.top();
+  undoStack.pop();
+
+  std::fstream file(this->file, std::ios::binary | std::ios::in | std::ios::out);
+  file.seekp(offset);
+  char newByte;
+  file.read(&newByte, 1);
+
+  redoStack.push({offset, newByte});
+
+  file.seekp(offset);
+  file.write(&oldByte, 1);
+  
+  file.close();
+}
+
+void HxE::redo() {
+  if(redoStack.size() == 0) {
+    std::cerr << "Nothing to redo" << std::endl;
+    return;
+  }
+  auto [offset, redoByte] = redoStack.top();
+  redoStack.pop();
+
+  std::fstream file(this->file, std::ios::binary | std::ios::in | std::ios::out);
+  file.seekp(offset);
+  char oldByte;
+  file.read(&oldByte, 1);
+  
+  undoStack.push({offset, oldByte});
+
+  file.seekp(offset);
+  file.write(&redoByte, 1);
+
+  file.close();
 }

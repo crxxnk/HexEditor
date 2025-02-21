@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -5,11 +7,28 @@
 #include <cstdint>
 #include <iomanip>
 #include <map>
+#include "hex_editor.h"
 
 namespace utils {
-  bool isFileEmpty(const char* input);
-  bool b_compare(const char* input, const char* _input);
-  std::pair<int, int> p_compare(const char* input, const char* _input);
-  std::pair<std::pair<char, char>, unsigned int> po_compare(const char* input, const char* _input);
-  std::pair<int, int> o_compare(const char* input, const char* _input);
+  class Comparator {
+
+  };
+  bool isFileEmpty(const char* input); // works
+
+  bool b_compare(const HxE &input, const HxE &_input); // works
+
+  // First occurence
+  // Hex
+  std::pair<int, int> p_compare(const HxE &input, const HxE &_input); // works
+  std::pair<int, int> p_compare(const HxE &input, const HxE &_input, unsigned int &offset); // works
+
+  // Char
+  std::pair<char, char> c_p_compare(const HxE &input, const HxE &_input); // works
+  std::pair<char, char> c_p_compare(const HxE &input, const HxE &_input, unsigned int &offset); // works
+
+  // All
+  std::vector<std::pair<int, int>> a_compare(const HxE &input, const HxE &_input); // works
+  std::vector<std::pair<int, int>> a_compare(const HxE &input, const HxE &_input, std::vector<unsigned int> &offset); //! I THINK IT WORKS GONNA TEST
+  std::vector<std::pair<char, char>> ca_compare(const HxE &input, const HxE &_input); // works
+  std::vector<std::pair<char, char>> ca_compare(const HxE &input, const HxE &_input, unsigned int &offset); // almost
 }

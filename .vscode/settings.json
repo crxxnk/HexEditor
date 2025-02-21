@@ -53,6 +53,15 @@
     "xutility": "cpp",
     "vector": "cpp",
     "map": "cpp",
-    "xtree": "cpp"
+    "xtree": "cpp",
+    "filesystem": "cpp",
+    "algorithm": "cpp",
+    "chrono": "cpp",
+    "forward_list": "cpp",
+    "optional": "cpp",
+    "ratio": "cpp",
+    "sstream": "cpp",
+    "stack": "cpp",
+    "deque": "cpp"
   }
 }
