@@ -34,6 +34,15 @@ bool utils::b_compare(const HxE &input, const HxE &_input) {
   return true;
 }
 
+const HxE &utils::s_compare(const HxE &input, const HxE &_input) {
+  HxE temp {};
+  if(input.getSize() > _input.getSize())
+    return input;
+  if(input.getSize() == _input.getSize())
+    return *getEmptyObject(); // returns an empty object
+  return _input;
+}
+
 //! First occurence
 //* Hex
 std::pair<int, int> utils::p_compare(const HxE &input, const HxE &_input) {
@@ -191,7 +200,7 @@ std::vector<std::pair<int, int>> utils::a_compare(const HxE &input, const HxE &_
 }
 
 //* Char
-std::vector<std::pair<char, char>> utils::ca_compare(const HxE &input, const HxE &_input) {
+std::vector<std::pair<char, char>> utils::c_a_compare(const HxE &input, const HxE &_input) {
   std::ifstream file(input.getFile(), std::ios::binary);
   std::ifstream _file(_input.getFile(), std::ios::binary);
 
@@ -217,6 +226,32 @@ std::vector<std::pair<char, char>> utils::ca_compare(const HxE &input, const HxE
   return diff;
 }
 
-std::vector<std::pair<char, char>> utils::ca_compare(const HxE &input, const HxE &_input, unsigned int &offset) {
-  
+std::vector<std::pair<char, char>> utils::c_a_compare(const HxE &input, const HxE &_input, std::vector<unsigned int> &offset) {
+  std::ifstream file(input.getFile(), std::ios::binary);
+  std::ifstream _file(_input.getFile(), std::ios::binary);
+
+  if(!file.is_open() || !_file.is_open()) {
+    std::cerr << "Couldn't open file" << std::endl;
+    return {{'-','-'}};
+  }
+
+  char f;
+  char s;
+  std::streampos cur_offset = 0;
+  std::vector<std::pair<char, char>> diff;
+
+  while(file.read(&f, 1) && _file.read(&s, 1)) {
+    cur_offset = file.tellg();
+    if(f != s) {
+      offset.push_back(static_cast<unsigned int>(cur_offset) - 1);
+      diff.push_back({f, s});
+    }
+  }
+
+  file.close();
+  _file.close();
+
+  if(diff.empty())
+    return {{'-', '-'}};
+  return diff;
 }

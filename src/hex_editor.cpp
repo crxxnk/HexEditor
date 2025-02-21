@@ -1,6 +1,7 @@
 #include "hex_editor.h"
 
-bool HxE::read(const char* input) {
+bool HxE::read(const char *input)
+{
   this->file = input;
   std::ifstream file(input, std::ios::binary);
   if(!file.is_open()) {
@@ -17,6 +18,7 @@ bool HxE::read(const char* input) {
   this->v = char_list;
   file.close();
   std::cout << "File was read successfully" << std::endl;
+  this->size = getSize();
   return true;
 }
 
@@ -61,8 +63,11 @@ void HxE::edit(unsigned int offset, char byte) {
   while (!redoStack.empty()) {
     redoStack.pop();
   }
-
   file.close();
+}
+
+bool HxE::isDifferent(const HxE& other, size_t index) const {
+  return this->v[index] != other.v[index];
 }
 
 void HxE::display() {
@@ -71,15 +76,31 @@ void HxE::display() {
   std::cout << std::endl;
 }
 
-void HxE::bDisplay(bool show_base){
+void HxE::bDisplay(bool show_base) {
+  std::ostringstream oss;
   if(show_base) {
     for(auto ve : this->v)
-      std::cout << std::left << std::setw(3) << std::hex << std::showbase << static_cast<int>(ve) << " ";
+      oss << std::left << std::setw(3) << std::hex << std::showbase << static_cast<int>(ve) << " ";
   } else {
     for(auto ve : this->v)
-      std::cout << std::left << std::setw(3) << std::hex << static_cast<int>(ve) << " ";
+      oss << std::left << std::setw(3) << std::hex << static_cast<int>(ve) << " ";
   }
-  std::cout << std::endl;
+
+  std::cout << oss.str() << std::endl;
+}
+
+void HxE::bDisplay(const HxE& other, bool show_base) {
+  std::ostringstream oss;
+  
+  for (size_t i = 0; i < v.size(); ++i) {
+    char ve = v[i];
+    if(isDifferent(other, i))
+      oss << RED;
+    oss << std::left << std::setw(3) << std::hex << static_cast<int>(ve) << " ";
+    oss << RESET;
+  }
+
+  std::cout << oss.str() << std::endl;
 }
 
 void HxE::undo() {
@@ -122,4 +143,52 @@ void HxE::redo() {
   file.write(&redoByte, 1);
 
   file.close();
+}
+
+bool HxE::jumpTo(unsigned int offset) {
+  std::ifstream file(this->file, std::ios::binary);
+  if(!file.is_open()) {
+    std::cerr << "Couldn't open file!" << std::endl;
+    return false;
+  }
+  file.seekg(offset, std::ios::beg);
+  file.read(&this->buf, 1);
+  return true;
+}
+
+void HxE::process() {
+  unsigned int offset;
+  char byte;
+  char select;
+  do {
+    std::cin>>select;
+    if(select == 'e') {
+      std::cin>>std::hex>>offset>>byte;
+      edit(offset, byte);
+    }
+    else if(select == 'z')
+      undo();
+    else if(select == 'q')
+      break;
+  } while(true);
+    // if((GetAsyncKeyState(VK_CONTROL) & 0x8000) && (GetAsyncKeyState(0x5A) & 0x8000))
+    //   undo();
+    // else if((GetAsyncKeyState(VK_CONTROL) & 0x8000) && (GetAsyncKeyState(0x45) & 0x8000)) {
+    //   std::cin>>std::hex>>offset>>byte;
+    //   edit(offset, byte);
+    // }
+      
+}
+
+bool operator>(const HxE &lhs, const HxE &rhs) {
+  return lhs.size > rhs.size;
+}
+
+bool operator==(const HxE &lhs, const HxE &rhs) {
+  return lhs.size == rhs.size;
+}
+
+std::ostream &operator<<(std::ostream &os, const HxE &rhs) {
+  os << rhs.file;
+  return os;
 }
